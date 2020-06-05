@@ -41,12 +41,24 @@ namespace WinDynamicDesktop
             {
                 return new ThemeResult(new InvalidThemeJSON(theme.themeId));
             }
-            else if (string.IsNullOrEmpty(theme.imageFilename) || IsNullOrEmpty(theme.sunriseImageList) ||
-                IsNullOrEmpty(theme.dayImageList) || IsNullOrEmpty(theme.sunsetImageList) ||
-                IsNullOrEmpty(theme.nightImageList))
+            else if (string.IsNullOrEmpty(theme.imageFilename))
             {
                 return new ThemeResult(new MissingFieldsInThemeJSON(theme.themeId));
             }
+
+            // check imageList
+            int imageListCount = 0;
+            if(theme.imageList != null)
+            {
+                foreach (var kv in theme.imageList)
+                {
+                    if (DaySegmentCompute.GetPhaseObject(kv.Key) == null)
+                        return new ThemeResult(new InvalidThemeJSON(theme.themeId));
+                    imageListCount += kv.Value.Length;
+                }
+            }
+            if(imageListCount == 0)
+                return new ThemeResult(new MissingFieldsInThemeJSON(theme.themeId));
 
             return new ThemeResult(theme);
         }

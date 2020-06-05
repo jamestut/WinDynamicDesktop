@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using SunCalcNet.Model;
 
 namespace WinDynamicDesktop
 {
@@ -83,8 +84,10 @@ namespace WinDynamicDesktop
                 }
             }
 
-            int imageId1 = theme.dayHighlight ?? theme.dayImageList[theme.dayImageList.Length / 2];
-            int imageId2 = theme.nightHighlight ?? theme.nightImageList[theme.nightImageList.Length / 2];
+            int[] imageList1 = DaySegmentCompute.GetThemeImageList(theme, DaySegment.SolarNoon);
+            int[] imageList2 = DaySegmentCompute.GetThemeImageList(theme, DaySegment.Night);
+            int imageId1 = imageList1[imageList1.Length / 2];
+            int imageId2 = imageList2[imageList2.Length / 2];
             string imageFilename1 = theme.imageFilename.Replace("*", imageId1.ToString());
             string imageFilename2 = theme.imageFilename.Replace("*", imageId2.ToString());
 

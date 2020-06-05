@@ -80,20 +80,10 @@ namespace WinDynamicDesktop
         public static List<int> GetThemeImageList(ThemeConfig theme)
         {
             List<int> imageList = new List<int>();
-
-            if (!theme.sunriseImageList.SequenceEqual(theme.dayImageList))
+            foreach(var kv in theme.imageList)
             {
-                imageList.AddRange(theme.sunriseImageList);
+                imageList.AddRange(kv.Value);
             }
-
-            imageList.AddRange(theme.dayImageList);
-
-            if (!theme.sunsetImageList.SequenceEqual(theme.dayImageList))
-            {
-                imageList.AddRange(theme.sunsetImageList);
-            }
-
-            imageList.AddRange(theme.nightImageList);
             return imageList;
         }
 

@@ -11,6 +11,8 @@ using System.IO;
 using System.Timers;
 using Newtonsoft.Json;
 using PropertyChanged;
+using System.Collections.Generic;
+using SunCalcNet.Model;
 
 namespace WinDynamicDesktop
 {
@@ -52,10 +54,10 @@ namespace WinDynamicDesktop
         public string imageCredits { get; set; }
         public int? dayHighlight { get; set; }
         public int? nightHighlight { get; set; }
-        public int[] sunriseImageList { get; set; }
-        public int[] dayImageList { get; set; }
-        public int[] sunsetImageList { get; set; }
-        public int[] nightImageList { get; set; }
+        public Dictionary<string,int[]> imageList { get; set; }
+
+        [JsonIgnore]
+        public int[][] imageListSorted { get; set; }
     }
 #nullable restore
 
@@ -113,6 +115,17 @@ namespace WinDynamicDesktop
             catch (JsonException)
             {
                 return null;
+            }
+
+            // convert image list to a sorted array index
+            theme.imageListSorted = new int[DaySegmentCompute.NumPhases][];
+            foreach(var kv in theme.imageList)
+            {
+                DaySegment? daySegment = DaySegmentCompute.GetPhaseObject(kv.Key);
+                if(daySegment != null)
+                {
+                    theme.imageListSorted[DaySegmentCompute.GetPhaseIndex(daySegment ?? DaySegment.SolarNoon)] = kv.Value;
+                }
             }
 
             theme.themeId = name;

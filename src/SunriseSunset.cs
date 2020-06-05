@@ -14,12 +14,101 @@ namespace WinDynamicDesktop
 {
     public enum PolarPeriod { None, PolarDay, PolarNight };
 
+    public enum DaySegment
+    {
+        Nadir, NightEnd, NauticalDawn, Dawn, Sunrise, SunriseEnd,
+        GoldenHourEnd, SolarNoon, GoldenHour, SunsetStart, Sunset, 
+        Dusk, NauticalDusk, Night
+    };
+
     public class SolarData
     {
         public PolarPeriod polarPeriod = PolarPeriod.None;
         public DateTime sunriseTime { get; set; }
         public DateTime sunsetTime { get; set; }
         public DateTime[] solarTimes { get; set; }
+    }
+
+    public static class DaySegmentCompute
+    {
+        public static int NumPhases { get; private set; }
+
+        private static Dictionary<string, DaySegment> phaseStrMap;
+        private static Dictionary<DaySegment, int> phaseIndexMap;
+        private static DaySegment[] phaseOrder;
+        static DaySegmentCompute()
+        {
+            phaseStrMap = new Dictionary<string, DaySegment>();
+            phaseIndexMap = new Dictionary<DaySegment, int>();
+
+            // order starts from midnight
+            phaseOrder = new DaySegment[] {
+                DaySegment.Nadir, DaySegment.NightEnd, DaySegment.NauticalDawn, DaySegment.Dawn,
+                DaySegment.Sunrise, DaySegment.SunriseEnd, DaySegment.GoldenHourEnd, DaySegment.SolarNoon,
+                DaySegment.GoldenHour, DaySegment.SunsetStart, DaySegment.Sunset, DaySegment.Dusk,
+                DaySegment.NauticalDusk, DaySegment.Night };
+            NumPhases = phaseOrder.Length;
+            for (int i = 0; i < NumPhases; ++i)
+                phaseIndexMap.Add(phaseOrder[i], i);
+
+            // names (these names doesn't have spaces, that's why we're typing them all over again here)
+            phaseStrMap.Add("Nadir", DaySegment.Nadir);
+            phaseStrMap.Add("NightEnd", DaySegment.NightEnd);
+            phaseStrMap.Add("NauticalDawn", DaySegment.NauticalDawn);
+            phaseStrMap.Add("Dawn", DaySegment.Dawn);
+            phaseStrMap.Add("Sunrise", DaySegment.Sunrise);
+            phaseStrMap.Add("SunriseEnd", DaySegment.SunriseEnd);
+            phaseStrMap.Add("GoldenHourEnd", DaySegment.GoldenHourEnd);
+            phaseStrMap.Add("SolarNoon", DaySegment.SolarNoon);
+            phaseStrMap.Add("GoldenHour", DaySegment.GoldenHour);
+            phaseStrMap.Add("SunsetStart", DaySegment.SunsetStart);
+            phaseStrMap.Add("Sunset", DaySegment.Sunset);
+            phaseStrMap.Add("Dusk", DaySegment.Dusk);
+            phaseStrMap.Add("NauticalDusk", DaySegment.NauticalDusk);
+            phaseStrMap.Add("Night", DaySegment.Night);
+        }
+
+        public static DaySegment? GetPhaseObject(string name)
+        {
+            if(name != null)
+            {
+                if (phaseStrMap.ContainsKey(name))
+                    return phaseStrMap[name];
+            }
+            return null;
+        }
+
+        public static DaySegment? GetPhaseObject(int index)
+        {
+            if (index < 0 || index >= phaseOrder.Length)
+                return null;
+            return phaseOrder[index];
+        }
+
+        public static int GetPhaseIndex(DaySegment obj)
+        {
+            return phaseIndexMap[obj];
+        }
+
+        public static int[] GetThemeImageList(ThemeConfig theme, DaySegment phase)
+        {
+            var phaseIndex = GetPhaseIndex(phase);
+            if ((theme.imageListSorted[phaseIndex]?.Length ?? 0) > 0)
+                return theme.imageListSorted[phaseIndex];
+
+            // find the last image in the phase preceding this immediately
+            for (int i = NumPhases + phaseIndex; i >= 0; --i)
+            {
+                var imgArr = theme.imageListSorted[i % NumPhases];
+                if ((imgArr?.Length ?? 0) > 0)
+                {
+                    return new int[] { imgArr[imgArr.Length - 1] };
+                }
+            }
+
+            // theme validator should catch this up before we ever reach this point
+            return null;
+        }
     }
 
     class SunriseSunsetService
@@ -64,18 +153,36 @@ namespace WinDynamicDesktop
             double latitude = double.Parse(JsonConfig.settings.latitude, CultureInfo.InvariantCulture);
             double longitude = double.Parse(JsonConfig.settings.longitude, CultureInfo.InvariantCulture);
             var sunPhases = GetSunPhases(date, latitude, longitude);
+
+            // debug
+            System.Diagnostics.Debug.WriteLine("Solar data (in local time):");
+            foreach (var sunPhase in sunPhases)
+            {
+                System.Diagnostics.Debug.WriteLine(" - {0} : {1}", sunPhase.Name, sunPhase.PhaseTime.ToLocalTime());
+            }
+
             SolarData data = new SolarData();
 
             try
             {
                 data.sunriseTime = GetSolarTime(sunPhases, SunPhaseName.Sunrise);
                 data.sunsetTime = GetSolarTime(sunPhases, SunPhaseName.Sunset);
-                data.solarTimes = new DateTime[4]
+                data.solarTimes = new DateTime[14]
                 {
+                    GetSolarTime(sunPhases, SunPhaseName.Nadir),
+                    GetSolarTime(sunPhases, SunPhaseName.NightEnd),
+                    GetSolarTime(sunPhases, SunPhaseName.NauticalDawn),
                     GetSolarTime(sunPhases, SunPhaseName.Dawn),
+                    GetSolarTime(sunPhases, SunPhaseName.Sunrise),
+                    GetSolarTime(sunPhases, SunPhaseName.SunriseEnd),
                     GetSolarTime(sunPhases, SunPhaseName.GoldenHourEnd),
+                    GetSolarTime(sunPhases, SunPhaseName.SolarNoon),
                     GetSolarTime(sunPhases, SunPhaseName.GoldenHour),
-                    GetSolarTime(sunPhases, SunPhaseName.Dusk)
+                    GetSolarTime(sunPhases, SunPhaseName.SunsetStart),
+                    GetSolarTime(sunPhases, SunPhaseName.Sunset),
+                    GetSolarTime(sunPhases, SunPhaseName.Dusk),
+                    GetSolarTime(sunPhases, SunPhaseName.NauticalDusk),
+                    GetSolarTime(sunPhases, SunPhaseName.Night)
                 };
             }
             catch (InvalidOperationException)  // Handle polar day/night
