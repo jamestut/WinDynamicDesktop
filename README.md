@@ -19,9 +19,57 @@ Pick from the 3 themes bundled with macOS, or many more themes available for dow
 
 ## Timing
 
-Choose a schedule for cycling through wallpaper images over 24 hours
+The timing is modified from the original repository. Originally one day is dividied into 4 segments: sunrise, noon, sunset, and night. However, this version divides a day into the following 14 segments, ordered by time, starting from midnight:
 
-![Screenshot of Configure Timing window](imgs/configure_timing.png)
+- Nadir
+- NightEnd
+- NauticalDawn
+- Dawn
+- Sunrise
+- SunriseEnd
+- GoldenHourEnd
+- SolarNoon
+- GoldenHour
+- SunsetStart
+- Sunset
+- Dusk
+- NauticalDusk
+- Night
+
+Refer to [here](https://rdrr.io/cran/suncalc/man/getSunlightTimes.html) for explanation of each day phase.
+
+### Theme JSON File
+
+With the new timing method came a new theme JSON format. In particular, all `*ImageList` in the original configuration file should removed and replaced with the new `imageList` key, which contains a dictionary with keys of the above day phase, and value of integer image list as previous. Here is an example of a full theme configuration file:
+
+```
+{
+  "imageFilename": "mojave_*.jpg",
+  "imageCredits": "Apple",
+  "imageList": {
+    "Nadir": [16],
+    "NightEnd": [15],
+    "NauticalDawn":[1],
+    "Dawn":[2],
+    "Sunrise":[3],
+    "SunriseEnd":[4],
+    "GoldenHourEnd":[5,6],
+    "SolarNoon":[7,8,9],
+    "GoldenHour":[10],
+    "SunsetStart":[11],
+    "Sunset":[12],
+    "Dusk":[13],
+    "Night":[14]
+  }
+}
+```
+
+Any part of the day can be skipped, in which case the last image from the previous phase will be used. For example, if current phase is `NightEnd` but the definition only contains up to `Night`, then the last image from `Night` will be used.
+
+### Known Issues
+
+- App will crash if location is different from current time zone.
+
 
 ## Supported Platforms
 
