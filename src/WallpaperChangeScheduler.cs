@@ -148,7 +148,7 @@ namespace WinDynamicDesktop
             int[] imageList = null;
             DateTime segmentStart;
             DateTime segmentEnd;
-            SchedulerState imageData = new SchedulerState() { daySegment2 = isSunUp ? 0 : 1 };
+            SchedulerState imageData = new SchedulerState();
 
             if (!JsonConfig.settings.darkMode)
             {
@@ -159,12 +159,14 @@ namespace WinDynamicDesktop
                         imageList = DaySegmentCompute.GetThemeImageList(theme, DaySegment.SolarNoon);
                         segmentStart = DateTime.Today;
                         segmentEnd = DateTime.Today.AddDays(1);
+                        imageData.daySegment2 = 0;
                         imageData.daySegment4 = 1;
                         break;
                     case PolarPeriod.PolarNight:
                         imageList = DaySegmentCompute.GetThemeImageList(theme, DaySegment.Night);
                         segmentStart = DateTime.Today;
                         segmentEnd = DateTime.Today.AddDays(1);
+                        imageData.daySegment2 = 1;
                         imageData.daySegment4 = 3;
                         break;
                     default:
@@ -190,7 +192,11 @@ namespace WinDynamicDesktop
                                 segmentEnd = tomorrowsData.solarTimes[0];
                             }
                         }
-                        
+
+                        // daySegment2
+                        imageData.daySegment2 = (daySegment >= 4 && daySegment < 13) ? 0 : 1;
+
+                        // daySegment4
                         switch(daySegment)
                         {
                             case 2:
@@ -270,7 +276,7 @@ namespace WinDynamicDesktop
                 return;
             }
 
-            WallpaperApi.EnableTransitions();
+            // WallpaperApi.EnableTransitions();
             UwpDesktop.GetHelper().SetWallpaper(imageFilename);
 
             lastImagePath = imagePath;
